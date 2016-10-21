@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<number_text_classifiers>
+	<number_text_classifier>
+		<number_weight type=float>1</number_weight>
+		<identifier>std_text_classifier</identifier>
+		<param>
+			<rule_weight type="float">0</rule_weight>
+			<text_analyzer>
+				<is_thread_safe>true</is_thread_safe>
+				<analyzer>
+					<encode>utf8</encode>
+					<tokenizers>
+						<tokenizer>
+							<identifier>basicTokenzier</identifier>
+							<param>
+								<lexer_identifier>basicUTF8Lexer</lexer_identifier>
+								<token_filters>
+									<token_filter>
+										<identifier>defaultEnFilter</identifier>
+										<param>
+                                            <en_stopword_file>../data/dict/en_stop_word.dic</en_stopword_file>
+											<stem>false</stem>
+											<to_lowcase>true</to_lowcase>
+										</param>
+									</token_filter>
+								</token_filters>
+							</param>
+						</tokenizer>
+						<tokenizer>
+							<identifier>complexMaxMatchTokenzier</identifier>
+							<param>
+								<lexer_identifier>basicUTF8Lexer</lexer_identifier>
+                                <dict_file>../data/dict/std_dict.news.dat</dict_file>
+							</param>
+						</tokenizer>
+					</tokenizers>
+				</analyzer>
+			</text_analyzer>
+			<rule_classifier>
+                <rule_file>../data/dict/rulelist.xml</rule_file>
+				<rule_parser>
+					<identifier>basic_parser</identifier>
+				</rule_parser>
+			</rule_classifier>
+			<centroid_classifier>
+				<centroid_files>
+                    <centroid_file>../data/model/YQ.svm.model</centroid_file>
+				</centroid_files>
+				<is_ensure_nonnegative>true</is_ensure_nonnegative>
+				<norm_method>l2norm</norm_method>
+				<doc_vec_builder>
+					<identifier>standard_doc_vec_builder</identifier>
+					<param>
+						<word_weighting_method>bo1</word_weighting_method>
+						<normalize_method>l2norm</normalize_method>
+                        <vocabulary_file>../data/vocabulary/vocabulary.news.dat</vocabulary_file>
+					</param>
+				</doc_vec_builder>
+			</centroid_classifier>
+		</param>
+	</number_text_classifier>
+</number_text_classifiers>
