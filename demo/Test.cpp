@@ -1,13 +1,13 @@
 #include <iostream>
 #include <fstream>
-#include "TextClassifierAPI.h"
+#include "SentiClassifierAPI.h"
 #include "sentimodel.h"
 
 
 using namespace senti_analysis;
 using namespace std;
 
-static void test()
+/*static void test()
 {
 	CLASSIFIER_HANDLER *h_clf;
 
@@ -41,7 +41,7 @@ static void test()
        }
 
 	Classifier_Exit(h_clf);
-}
+}*/
 
 int fn_iInitWeiboDataFromFile(const char *dataPath, vector<Weibo> &weibo)
 {
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         cout << "miss input file" << endl;
         return 1;
     }
-    string confPath = "../conf/text_classifier.config.xml";
+    string confPath = "../conf/senti_classifier.weibo.config.xml";
     CSentimentModel model(confPath);
     vector<Weibo> text;
     vector<vector<pstWeibo> > res;
@@ -93,8 +93,7 @@ int main(int argc, char **argv)
         corpus.push_back(&text[i]);
 
     vector<double> scores;
-    vector<string> labels;
-    if (!model.BatchAnalysis(corpus, scores, labels))
+    if (!model.BatchAnalysis(corpus, scores))
     {
         cout<<"sentiment analysis failed" << endl;
         return 1;
@@ -102,7 +101,9 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < corpus.size(); i++)
     {
-        cout<<i<<" "<<labels[i]<<" "<<scores[i]<<endl;
+        //cout<<i<<" "<<labels[i]<<" "<<scores[i]<<endl;
+        if (scores[i] > 0)
+            cout<<corpus[i]->source<<" "<<scores[i]<<endl;
     }
 	return 0;
 }

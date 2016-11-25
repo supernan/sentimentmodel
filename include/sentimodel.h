@@ -4,14 +4,13 @@
 #include <map>
 #include <iostream>
 #include "glog/logging.h"
-#include "TextClassifierAPI.h"
+#include "SentiClassifierAPI.h"
 #include "DataType.h"
 #include "thpool.h"
 
 using namespace std;
 using namespace WeiboTopic_ICT;
 
-typedef void SENTIMENT_HANDLER;
 #define ERROR_SCORE -10.0
 #define ERROR_LABEL "error"
 
@@ -69,7 +68,6 @@ namespace senti_analysis
     {
         vector<pstWeibo> *m_pCorpus;
         vector<double> *m_pSentiScores;
-        vector<string> *m_pSentiLabels;
         CSentimentModel *m_hSentiModel;
         int m_nStart;
         int m_nEnd;
@@ -105,7 +103,7 @@ namespace senti_analysis
             * \date > 2016/10
             * \author > zhounan(zhounan@software.ict.ac.cn)
             */
-            bool AnalysisDocument(pstWeibo pDoc, double &dScore, string &sLabel);
+            bool AnalysisDocument(pstWeibo pDoc, double &dScore);
 
 
             /*
@@ -118,13 +116,13 @@ namespace senti_analysis
             * \date > 2016/10
             * \author > zhounan(zhounan@software.ict.ac.cn)
             */
-            bool BatchAnalysis(vector<pstWeibo> &rCorpus, vector<double> &vScores, vector<string> &vLabels);
+            bool BatchAnalysis(vector<pstWeibo> &rCorpus, vector<double> &vScores);
 
 
         private:
 
             // handler to achieve sentiment analysis
-            SENTIMENT_HANDLER *m_hSentiHandler;
+            SENTI_CLASSIFIER_HANDLER *m_hSentiHandler;
 
         public:
             // mutext to proctect thread function

@@ -26,43 +26,37 @@ void* senti_analysis::SentiAnaysisThreadFunc(void *arg)
 {
     sentiAnaysisThreadParam *pParam = (sentiAnaysisThreadParam*)arg;
     vector<pstWeibo> *pDocs = pParam->m_pCorpus;
-    vector<string> *pLabels = pParam->m_pSentiLabels;
     vector<double> *pScores = pParam->m_pSentiScores;
     int nStart = pParam->m_nStart;
     int nEnd = pParam->m_nEnd;
     CSentimentModel *pSentiModel = pParam->m_hSentiModel;
 
-    map<int, string> mTempLabels;
     map<int, double> mTempScore;
 
     for (int i = nStart; i < nEnd; i++)
     {
         double score = 0.0;
-        string label = "";
-        if (!pSentiModel->AnalysisDocument((*pDocs)[i], score, label))
+        if (!pSentiModel->AnalysisDocument((*pDocs)[i], score))
         {
             LOG(WARNING) << "Sentiment analysis failed in thread function" << endl;
             mTempScore[i] = ERROR_SCORE;
-            mTempLabels[i] = ERROR_LABEL;
             continue;
         }
         else
         {
             mTempScore[i] = score;
-            mTempLabels[i] = label;
         }
     }
 
     Lock(pSentiModel);
     for (int i = nStart; i < nEnd; i++)
     {
-        if (i >= pScores->size() || i >= pLabels->size())
+        if (i >= pScores->size())
         {
             LOG(WARNING) << "Doc index is out of boundry in thread function" << i << endl;
             continue;
         }
         (*pScores)[i] = mTempScore[i];
-        (*pLabels)[i] = mTempLabels[i];
     }
     UnLock(pSentiModel);
 }
@@ -73,7 +67,7 @@ senti_analysis::CSentimentModel::CSentimentModel(const string &rConfPath)
     FLAGS_log_dir = "../logs/";
     google::InitGoogleLogging("sentimodel");
     pthread_mutex_init(&m_iModelMutex, NULL);
-    if (!Classifier_Init(rConfPath, m_hSentiHandler))
+    if (Senti_Classifier_Init(rConfPath.c_str(), &m_hSentiHandler) != 1)
     {
         LOG(FATAL) << "Sentiment Model init Failed" << endl;
     }
@@ -84,18 +78,15 @@ senti_analysis::CSentimentModel::CSentimentModel(const string &rConfPath)
 senti_analysis::CSentimentModel::~CSentimentModel()
 {
     pthread_mutex_destroy(&m_iModelMutex);
-    if (!Classifier_Exit(m_hSentiHandler))
-    {
-        LOG(FATAL) << "Sentiment Model exit failed" << endl;
-    }
+    Senti_Classifier_Exit(m_hSentiHandler);
     LOG(INFO) << "SentiModel exit" << endl;
 }
 
 
-bool senti_analysis::CSentimentModel::AnalysisDocument(pstWeibo pDoc, double &dScore, string &sLabel)
+bool senti_analysis::CSentimentModel::AnalysisDocument(pstWeibo pDoc, double &dScore)
 {
     string text = pDoc->source;
-    if (!Text_Classify_Perform_ZX(m_hSentiHandler, text, sLabel, dScore))
+    if (Senti_Classify_Perform(m_hSentiHandler, text.c_str(), &dScore) != 1)
     {
         LOG(WARNING) << "Doc Sentiment analysis failed " << text << endl;
         return false;
@@ -105,10 +96,9 @@ bool senti_analysis::CSentimentModel::AnalysisDocument(pstWeibo pDoc, double &dS
 
 
 bool senti_analysis::CSentimentModel::BatchAnalysis(vector<pstWeibo> &rCorpus,
-                                                    vector<double> &vScores, vector<string> &vLabels)
+                                                    vector<double> &vScores)
 {
     vScores.clear();
-    vLabels.clear();
     if (rCorpus.empty())
     {
         LOG(ERROR) << "Corpus empty when BatchAnalysis" << endl;
@@ -117,7 +107,6 @@ bool senti_analysis::CSentimentModel::BatchAnalysis(vector<pstWeibo> &rCorpus,
 
     int nSize = rCorpus.size();
     vScores.assign(nSize, ERROR_SCORE);
-    vLabels.assign(nSize, ERROR_LABEL);
     int nCores = GetCoreNum();
     int nThreads = 0;
     if (nCores < 2)
@@ -144,7 +133,6 @@ bool senti_analysis::CSentimentModel::BatchAnalysis(vector<pstWeibo> &rCorpus,
         }
         param->m_pCorpus = &rCorpus;
         param->m_pSentiScores = &vScores;
-        param->m_pSentiLabels = &vLabels;
         param->m_hSentiModel = this;
         param->m_nStart = i * nPatchSize;
         if (i == nThreads - 1)
