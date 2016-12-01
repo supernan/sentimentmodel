@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < corpus.size(); i++)
     {
         //cout<<i<<" "<<labels[i]<<" "<<scores[i]<<endl;
-        if (scores[i] > 0)
+        if (scores[i] < 0)
             cout<<corpus[i]->source<<" "<<scores[i]<<endl;
     }
 	return 0;

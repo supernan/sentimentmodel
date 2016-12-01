@@ -2,7 +2,7 @@
 
 using namespace WeiboTopic_ICT;
 
-int GetCoreNum()
+int GetSentiCoreNum()
 {
     int count = 0;
 	count = sysconf(_SC_NPROCESSORS_CONF);
@@ -64,8 +64,8 @@ void* senti_analysis::SentiAnaysisThreadFunc(void *arg)
 
 senti_analysis::CSentimentModel::CSentimentModel(const string &rConfPath)
 {
-    FLAGS_log_dir = "../logs/";
-    google::InitGoogleLogging("sentimodel");
+    //FLAGS_log_dir = "../logs/";
+    //google::InitGoogleLogging("sentimodel");
     pthread_mutex_init(&m_iModelMutex, NULL);
     if (Senti_Classifier_Init(rConfPath.c_str(), &m_hSentiHandler) != 1)
     {
@@ -86,6 +86,7 @@ senti_analysis::CSentimentModel::~CSentimentModel()
 bool senti_analysis::CSentimentModel::AnalysisDocument(pstWeibo pDoc, double &dScore)
 {
     string text = pDoc->source;
+    //cout<<"before "<<text<<endl;
     if (Senti_Classify_Perform(m_hSentiHandler, text.c_str(), &dScore) != 1)
     {
         LOG(WARNING) << "Doc Sentiment analysis failed " << text << endl;
@@ -107,12 +108,12 @@ bool senti_analysis::CSentimentModel::BatchAnalysis(vector<pstWeibo> &rCorpus,
 
     int nSize = rCorpus.size();
     vScores.assign(nSize, ERROR_SCORE);
-    int nCores = GetCoreNum();
+    int nCores = GetSentiCoreNum();
     int nThreads = 0;
     if (nCores < 2)
         nThreads = 1;
     else
-        nThreads = nCores / 2; //TODO
+        nThreads = nCores; //TODO
     int nPatchSize = nSize / nThreads;
     if (nPatchSize <= 0) //if the number of docs is too small
     {
